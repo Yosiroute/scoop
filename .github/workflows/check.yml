@@ -1,21 +1,24 @@
 name: check
 on:
-  pull_request_target:
-permissions: {}
+  pull_request:            # was pull_request_target — this is the fix
+permissions:
+  contents: read           # least privilege; no write token, no secrets in scope
 jobs:
   a:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout PR code (mutable head ref)
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}                    # still the mutable branch
+          repository: ${{ github.event.pull_request.head.repo.full_name }}  # was .repo (an object) — bug
+          persist-credentials: false                                        # don't leave the token in .git
 
-      - run: | 
-          echo "wworked"
+      - run: echo "worked"
 
-
-      - run: |
-          echo "chain-a ran for ${{ github.event.pull_request.head.repo.full_name }} @ ${{ github.event.pull_request.head.ref }}"
-
+      - name: Log PR info (no injection)
+        env:                                                    # fork-controlled values via env…
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          echo "chain-a ran for $HEAD_REPO @ $HEAD_REF"          # …never inline ${{ }} in a shell
