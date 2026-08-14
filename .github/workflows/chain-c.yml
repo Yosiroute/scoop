@@ -1,0 +1,44 @@
+name: chain-c
+on:
+  workflow_run:
+    workflows: ["chain-b"]
+    types: [completed]
+permissions: {}
+jobs:
+  c:
+    runs-on: ubuntu-latest
+    steps:
+      - name: context
+        run: |
+          echo "event_name = ${{ github.event_name }}"
+          echo "github.ref = ${{ github.ref }}"                      # expect refs/heads/<default>
+          echo "upstream   = ${{ github.event.workflow_run.event }}" # workflow_run
+
+      - name: decode cache token permission (optional; may be unavailable)
+        continue-on-error: true
+        run: |
+          python3 - <<'PY'
+          import os, base64, json
+          t = os.environ.get("ACTIONS_RUNTIME_TOKEN")
+          if not t:
+              print("ACTIONS_RUNTIME_TOKEN not exposed to run steps here"); raise SystemExit(0)
+          p = t.split(".")[1]; p += "=" * (-len(p) % 4)
+          ac = json.loads(base64.urlsafe_b64decode(p)).get("ac")
+          print("raw ac:", ac)
+          try:
+              for e in json.loads(ac):
+                  print("Scope=", e.get("Scope"), "Permission=", e.get("Permission"),
+                        "(1=read, 2=write, 3=read+write)")
+          except Exception as ex:
+              print("ac not parseable:", ex)
+          PY
+
+      - run: echo "probe-${{ github.run_id }}" > probe.txt
+
+      - name: try to SAVE cache (the real test)
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: probe.txt
+          key: perm-probe-${{ github.run_id }}   # unique per run → always attempts a write
+
