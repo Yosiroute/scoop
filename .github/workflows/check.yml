@@ -6,15 +6,9 @@ permissions:
 jobs:
   a:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout PR code (mutable head ref)
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}                    # still the mutable branch
-          repository: ${{ github.event.pull_request.head.repo.full_name }}  # was .repo (an object) — bug
-          persist-credentials: false                                        # don't leave the token in .git
+    steps:                                     # don't leave the token in .git
 
-      - run: echo "worked"
+      - run: echo "check"
 
       - name: Log PR info (no injection)
         env:                                                    # fork-controlled values via env…
