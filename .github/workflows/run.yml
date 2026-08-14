@@ -1,10 +1,10 @@
 name: check
 on:
-  workflow_run:            # was pull_request_target — this is the fix
+  workflow_run:
     workflows: [check]
     types: [completed]
 permissions:
-  contents: read           # least privilege; no write token, no secrets in scope
+  contents: read
 jobs:
   a:
     runs-on: ubuntu-latest
@@ -12,15 +12,15 @@ jobs:
       - name: Checkout PR code (mutable head ref)
         uses: actions/checkout@v6
         with:
-          ref: ${{ head_ref }}                    # still the mutable branch
-          repository: ${{ head_repo }}  # was .repo (an object) — bug
-          persist-credentials: false                                        # don't leave the token in .git
+          ref: ${{ github.event.workflow_run.head_branch }}                     # was ${{ head_ref }}
+          repository: ${{ github.event.workflow_run.head_repository.full_name }} # was ${{ head_repo }}
+          persist-credentials: false
 
       - run: echo "worked"
 
       - name: Log PR info (no injection)
-        env:                                                    # fork-controlled values via env…
-          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
-          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        env:
+          HEAD_REPO: ${{ github.event.workflow_run.head_repository.full_name }}
+          HEAD_REF: ${{ github.event.workflow_run.head_branch }}
         run: |
-          echo "chain-a ran for $HEAD_REPO @ $HEAD_REF"         
+          echo "chain-a ran for $HEAD_REPO @ $HEAD_REF"

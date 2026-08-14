@@ -17,8 +17,3 @@ jobs:
           repository: ${{ github.event.issue.comment.repo.full_name }}  # was .repo (an object) — bug
           persist-credentials: false                                        # don't leave the token in .git
 
-      - name: Run check
-        uses: ./.github/workflows/run.yml
-        with:
-          head_repo: ${{ env.HEAD_REPO }}
-          head_ref: ${{ env.HEAD_REF }}
