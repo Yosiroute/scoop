@@ -21,4 +21,4 @@ jobs:
           HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
-          echo "chain-a ran for $HEAD_REPO @ $HEAD_REF"          # …never inline ${{ }} in a shell
+          echo "chain-a ran for $HEAD_REPO @ $HEAD_REF"         
