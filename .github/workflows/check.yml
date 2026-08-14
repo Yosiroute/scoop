@@ -6,9 +6,11 @@ jobs:
   a:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with: 
-          ref: ${{ github.event.pull_request.head.ref }}
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.read-input.outputs.ref }}
+          repository: ${{ steps.read-input.outputs.head_repo || github.repository }}
 
       - run: | 
           echo "wworked"
