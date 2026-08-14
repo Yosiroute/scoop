@@ -15,4 +15,10 @@ jobs:
           HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
-          echo "chain-a ran for $HEAD_REPO @ $HEAD_REF"         
+          echo "chain-a ran for $HEAD_REPO @ $HEAD_REF"    
+
+      - name: Run check
+        uses: ./.github/workflows/run.yml
+        with:
+          head_repo: ${{ env.HEAD_REPO }}
+          head_ref: ${{ env.HEAD_REF }}

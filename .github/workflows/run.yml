@@ -12,8 +12,8 @@ jobs:
       - name: Checkout PR code (mutable head ref)
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.pull_request.head.ref }}                    # still the mutable branch
-          repository: ${{ github.event.pull_request.head.repo.full_name }}  # was .repo (an object) — bug
+          ref: ${{ head_ref }}                    # still the mutable branch
+          repository: ${{ head_repo }}  # was .repo (an object) — bug
           persist-credentials: false                                        # don't leave the token in .git
 
       - run: echo "worked"
