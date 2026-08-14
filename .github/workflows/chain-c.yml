@@ -3,6 +3,8 @@ on:
   workflow_run:
     workflows: ["chain-b"]
     types: [completed]
+  push:
+    branches: [ main ]
 permissions: {}
 jobs:
   c:
