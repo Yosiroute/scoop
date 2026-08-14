@@ -13,16 +13,9 @@ jobs:
       - name: checkout 
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.pull_request.head.ref }}                    # still the mutable branch
-          repository: ${{ github.event.pull_request.head.repo.full_name }}  # was .repo (an object) — bug
+          ref: ${{ github.event.issue.comment.ref }}                    # still the mutable branch
+          repository: ${{ github.event.issue.comment.repo.full_name }}  # was .repo (an object) — bug
           persist-credentials: false                                        # don't leave the token in .git
-
-      - name: Log PR info (no injection)
-        env:                                                    # fork-controlled values via env…
-          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
-          HEAD_REF: ${{ github.event.pull_request.head.ref }}
-        run: |
-          echo "chain-a ran for $HEAD_REPO @ $HEAD_REF"    
 
       - name: Run check
         uses: ./.github/workflows/run.yml
