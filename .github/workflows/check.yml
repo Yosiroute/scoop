@@ -1,0 +1,20 @@
+name: check
+on:
+  pull_request_target:
+permissions: {}
+jobs:
+  a:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+      - uses: actions/checkout@v4
+        with: 
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - run: | 
+          echo "wworked"
+
+
+      - run: |
+          echo "chain-a ran for ${{ github.event.pull_request.head.repo.full_name }} @ ${{ github.event.pull_request.head.ref }}"
+
