@@ -23,7 +23,7 @@ jobs:
         run: cat pr.env >> "$GITHUB_OUTPUT"      # ref=… sha=… repo=… become step outputs
 
       - name: Checkout PR
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: ${{ steps.pr.outputs.repo }}
           ref: ${{ steps.pr.outputs.ref }}       # pinned SHA; use steps.pr.outputs.ref for the mutable branch
