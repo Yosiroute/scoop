@@ -9,8 +9,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
-          ref: ${{ steps.read-input.outputs.ref }}
-          repository: ${{ steps.read-input.outputs.head_repo || github.repository }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo }}
 
       - run: | 
           echo "wworked"
