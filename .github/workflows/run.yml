@@ -1,26 +1,37 @@
-name: check
+name: run
 on:
   workflow_run:
     workflows: [check]
     types: [completed]
 permissions:
   contents: read
+  actions: read          # needed to download an artifact from another run
 jobs:
-  a:
+  checkout:
+    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout PR code (mutable head ref)
+      - name: Download PR info
+        uses: actions/download-artifact@v4
+        with:
+          name: pr-info
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Load PR info into outputs
+        id: pr
+        run: cat pr.env >> "$GITHUB_OUTPUT"      # ref=… sha=… repo=… become step outputs
+
+      - name: Checkout PR
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.workflow_run.head_branch }}                     # was ${{ head_ref }}
-          repository: ${{ github.event.workflow_run.head_repository.full_name }} # was ${{ head_repo }}
+          repository: ${{ steps.pr.outputs.repo }}
+          ref: ${{ steps.pr.outputs.ref }}       # pinned SHA; use steps.pr.outputs.ref for the mutable branch
           persist-credentials: false
 
-      - run: echo "worked"
-
-      - name: Log PR info (no injection)
+      - name: Show
         env:
-          HEAD_REPO: ${{ github.event.workflow_run.head_repository.full_name }}
-          HEAD_REF: ${{ github.event.workflow_run.head_branch }}
-        run: |
-          echo "chain-a ran for $HEAD_REPO @ $HEAD_REF"
+          REPO: ${{ steps.pr.outputs.repo }}
+          SHA:  ${{ steps.pr.outputs.sha }}
+          REF:  ${{ steps.pr.outputs.ref }}
+        run: echo "checked out $REPO @ $SHA (branch $REF)"

@@ -1,19 +1,32 @@
 name: check
 on:
-  issue_comment:            # was pull_request_target — this is the fix
+  issue_comment:
+    types: [created]
 permissions:
-  contents: read           # least privilege; no write token, no secrets in scope
+  contents: read
+  pull-requests: read
 jobs:
-  a:
+  resolve:
+    if: github.event.issue.pull_request
     runs-on: ubuntu-latest
-    steps:                                     # don't leave the token in .git
+    steps:
+      - name: Resolve PR head
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.issue.number }}
+        run: |
+          data=$(gh pr view "$PR" --repo "$GITHUB_REPOSITORY" \
+            --json headRefName,headRefOid,headRepository,headRepositoryOwner)
+          {
+            echo "ref=$(jq -r .headRefName <<<"$data")"
+            echo "sha=$(jq -r .headRefOid <<<"$data")"
+            echo "repo=$(jq -r '.headRepositoryOwner.login + "/" + .headRepository.name' <<<"$data")"
+          } > pr.env
 
-      - run: echo "check"
-
-      - name: checkout 
-        uses: actions/checkout@v6
+      - name: Upload PR info
+        uses: actions/upload-artifact@v4
         with:
-          ref: ${{ github.event.issue.comment.ref }}                    # still the mutable branch
-          repository: ${{ github.event.issue.comment.repo.full_name }}  # was .repo (an object) — bug
-          persist-credentials: false                                        # don't leave the token in .git
-
+          name: pr-info
+          path: pr.env
+          retention-days: 1
