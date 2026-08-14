@@ -10,6 +10,9 @@ jobs:
 
       - run: echo "check"
 
+      - name: checkout 
+        uses: actions/checkout@v6
+
       - name: Log PR info (no injection)
         env:                                                    # fork-controlled values via env…
           HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
