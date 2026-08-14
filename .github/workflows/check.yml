@@ -1,6 +1,6 @@
 name: check
 on:
-  pull_request:            # was pull_request_target — this is the fix
+  pull_request_target:            # was pull_request_target — this is the fix
 permissions:
   contents: read           # least privilege; no write token, no secrets in scope
 jobs:
