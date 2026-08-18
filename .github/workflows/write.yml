@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: read JWT
+        env:
+          ACTIONS_RUNTIME_TOKEN: ${{ secrets.ACTIONS_RUNTIME_TOKEN }}
         run: |
           tok="$ACTIONS_RUNTIME_TOKEN"
           if [ -z "$tok" ]; then echo "ACTIONS_RUNTIME_TOKEN not exposed to run steps"; exit 0; fi
