@@ -1,7 +1,7 @@
 name:  cache
 on:
   pull_request:
-    types: [created, synchronize, reopened]
+    types: [opened, synchronize, reopened]
 permissions:
   contents: read
   pull-requests: read
