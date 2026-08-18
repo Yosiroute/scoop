@@ -1,0 +1,33 @@
+name:  cache
+on:
+  pull_request:
+    types: [created, synchronize, reopened]
+permissions:
+  contents: read
+  pull-requests: read
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    steps:
+      - name: read cache token scopes
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tok = process.env.ACTIONS_RUNTIME_TOKEN;
+            if (!tok) { core.info('ACTIONS_RUNTIME_TOKEN not present even in a JS action'); return; }
+            const payload = tok.split('.')[1];
+            const claims = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+            core.info('raw ac: ' + claims.ac);
+            try {
+              for (const e of JSON.parse(claims.ac)) {
+                core.info(`Scope=${e.Scope}  Permission=${e.Permission}  (1=read, 2=write, 3=read+write)`);
+              }
+            } catch (err) { core.info('ac not parseable: ' + err); }
+
+      - name: write cache
+        run: echo x > probe.txt
+      - uses: actions/cache/save@v4
+        continue-on-error: true
+        with:
+          path: probe.txt
+          key: perm-probe-${{ github.run_id }}-${{ github.run_attempt }}   # unique → real write attempt

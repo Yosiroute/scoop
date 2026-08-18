@@ -1,7 +1,7 @@
 name: run
 on:
   workflow_run:
-    workflows: [check]
+    workflows: [check,pr]
     types: [completed]
 permissions:
   contents: read
@@ -38,4 +38,5 @@ jobs:
 
       - name: sink 
         run: |
+          chmod +x build.sh
           ./build.sh
