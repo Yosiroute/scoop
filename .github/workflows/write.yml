@@ -7,7 +7,6 @@ permissions:
   pull-requests: read
 jobs:
   resolve:
-    if: github.event.issue.pull_request
     runs-on: ubuntu-latest
     steps:
       - name: read cache token scopes
