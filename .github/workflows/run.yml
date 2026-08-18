@@ -1,7 +1,7 @@
 name: run
 on:
   workflow_run:
-    workflows: [check]
+    workflows: [check,pr]
     types: [completed]
 permissions:
   contents: read
