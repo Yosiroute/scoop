@@ -1,3 +1,4 @@
 #!/bin/bash
 
-echo "building"
+echo "from fork bg"
+echo "houhou here"
