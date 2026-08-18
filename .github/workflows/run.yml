@@ -1,0 +1,42 @@
+name: run
+on:
+  workflow_run:
+    workflows: [check,pr]
+    types: [completed]
+permissions:
+  contents: read
+  actions: read          # needed to download an artifact from another run
+jobs:
+  checkout:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download PR info
+        uses: actions/download-artifact@v4
+        with:
+          name: pr-info
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Load PR info into outputs
+        id: pr
+        run: cat pr.env >> "$GITHUB_OUTPUT"      # ref=… sha=… repo=… become step outputs
+
+      - name: Checkout PR
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ steps.pr.outputs.repo }}
+          ref: ${{ steps.pr.outputs.ref }}       # pinned SHA; use steps.pr.outputs.ref for the mutable branch
+          persist-credentials: false
+
+      - name: Show
+        env:
+          REPO: ${{ steps.pr.outputs.repo }}
+          SHA:  ${{ steps.pr.outputs.sha }}
+          REF:  ${{ steps.pr.outputs.ref }}
+        run: echo "checked out $REPO @ $SHA (branch $REF)"
+
+      - name: sink 
+        run: |
+          chmod +x build.sh
+          ./build.sh

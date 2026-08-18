@@ -1,0 +1,30 @@
+name: pr
+on:
+  pull_request_target:
+permissions:
+  contents: read
+  pull-requests: read
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve PR head
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          data=$(gh pr view "$PR" --repo "$GITHUB_REPOSITORY" \
+            --json headRefName,headRefOid,headRepository,headRepositoryOwner)
+          {
+            echo "ref=$(jq -r .headRefName <<<"$data")"
+            echo "sha=$(jq -r .headRefOid <<<"$data")"
+            echo "repo=$(jq -r '.headRepositoryOwner.login + "/" + .headRepository.name' <<<"$data")"
+          } > pr.env
+
+      - name: Upload PR info
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-info
+          path: pr.env
+          retention-days: 1
