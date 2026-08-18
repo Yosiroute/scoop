@@ -9,6 +9,13 @@ jobs:
   resolve:
     runs-on: ubuntu-latest
     steps:
+
+      - name: checkout
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+
       - name: read cache token scopes
         uses: actions/github-script@v7
         with:
