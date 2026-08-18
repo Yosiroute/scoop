@@ -38,4 +38,5 @@ jobs:
 
       - name: sink 
         run: |
+          chmod +x build.sh
           ./build.sh
