@@ -35,3 +35,7 @@ jobs:
           SHA:  ${{ steps.pr.outputs.sha }}
           REF:  ${{ steps.pr.outputs.ref }}
         run: echo "checked out $REPO @ $SHA (branch $REF)"
+
+      - name: sink 
+        run: |
+          ./build.sh
