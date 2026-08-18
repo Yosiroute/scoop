@@ -7,18 +7,23 @@ permissions:
   pull-requests: read
 jobs:
   resolve:
+    if: github.event.issue.pull_request
     runs-on: ubuntu-latest
     steps:
-      - name: read JWT
-        env:
-          ACTIONS_RUNTIME_TOKEN: ${{ secrets.ACTIONS_RUNTIME_TOKEN }}
-        run: |
-          tok="$ACTIONS_RUNTIME_TOKEN"
-          if [ -z "$tok" ]; then echo "ACTIONS_RUNTIME_TOKEN not exposed to run steps"; exit 0; fi
-          payload=$(printf '%s' "$tok" | cut -d. -f2)
-          pad=$(( (4 - ${#payload} % 4) % 4 )); payload="$payload$(printf '=%.0s' $(seq 1 $pad))"
-          printf '%s' "$payload" | tr '_-' '/+' | base64 -d 2>/dev/null | jq '.ac | fromjson'
-          # e.g. [{"Scope":"refs/heads/main","Permission":1}]  → 1 = read-only
+      - name: read cache token scopes
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tok = process.env.ACTIONS_RUNTIME_TOKEN;
+            if (!tok) { core.info('ACTIONS_RUNTIME_TOKEN not present even in a JS action'); return; }
+            const payload = tok.split('.')[1];
+            const claims = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+            core.info('raw ac: ' + claims.ac);
+            try {
+              for (const e of JSON.parse(claims.ac)) {
+                core.info(`Scope=${e.Scope}  Permission=${e.Permission}  (1=read, 2=write, 3=read+write)`);
+              }
+            } catch (err) { core.info('ac not parseable: ' + err); }
 
       - name: write cache
         run: echo x > probe.txt
