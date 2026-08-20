@@ -1,0 +1,27 @@
+name: 'target run (job B)'
+# Run this FIRST
+on:
+  workflow_dispatch: {}
+
+jobs:
+  print-backend-ids:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Decode this run's Actions.Results scope from its own token
+        env:
+          ACTIONS_RUNTIME_TOKEN: ${{ env.ACTIONS_RUNTIME_TOKEN }}
+        run: |
+          node -e "
+            const jwt = process.env.ACTIONS_RUNTIME_TOKEN;
+            const payload = JSON.parse(Buffer.from(jwt.split('.')[1], 'base64url').toString());
+            const scope = payload.scp.split(' ').find(s => s.startsWith('Actions.Results:'));
+            const [, workflowRunBackendId, workflowJobRunBackendId] = scope.split(':');
+            console.log('workflowRunBackendId:    ' + workflowRunBackendId);
+            console.log('workflowJobRunBackendId: ' + workflowJobRunBackendId);
+            console.log('');
+            console.log('Copy these two values into the target_run_backend_id / target_job_backend_id inputs of job-a.yml');
+          "
+
+      - name: (context) also show the public run_id, for contrast
+        run: |
+          echo "run_id (public, sequential, NOT the isolation boundary): ${{ github.run_id }}"
