@@ -1,5 +1,5 @@
 name: 'target run (job B)'
-# Run this FIRST
+# Run this FIRST, 
 on:
   workflow_dispatch: {}
 
@@ -8,11 +8,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Decode this run's Actions.Results scope from its own token
-        env:
-          ACTIONS_RUNTIME_TOKEN: ${{ env.ACTIONS_RUNTIME_TOKEN }}
         run: |
           node -e "
             const jwt = process.env.ACTIONS_RUNTIME_TOKEN;
+            if (!jwt) { throw new Error('ACTIONS_RUNTIME_TOKEN is not set in this job environment'); }
             const payload = JSON.parse(Buffer.from(jwt.split('.')[1], 'base64url').toString());
             const scope = payload.scp.split(' ').find(s => s.startsWith('Actions.Results:'));
             const [, workflowRunBackendId, workflowJobRunBackendId] = scope.split(':');

@@ -1,13 +1,14 @@
-name: 'job A'
-# Runs SECOND
+name: '(job A)'
+
+# Run this SECOND
 on:
   workflow_dispatch:
     inputs:
       target_run_backend_id:
-        description: " workflowRunBackendId (from job-b.yml output)"
+        description: "job B's workflowRunBackendId (from job-b.yml output)"
         required: true
       target_job_backend_id:
-        description: " workflowJobRunBackendId (from job-b.yml output)"
+        description: "job B's workflowJobRunBackendId (from job-b.yml output)"
         required: true
 
 jobs:
@@ -15,11 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Show this run's own backend IDs, for contrast
-        env:
-          ACTIONS_RUNTIME_TOKEN: ${{ env.ACTIONS_RUNTIME_TOKEN }}
         run: |
           node -e "
             const jwt = process.env.ACTIONS_RUNTIME_TOKEN;
+            if (!jwt) { throw new Error('ACTIONS_RUNTIME_TOKEN is not set in this job environment'); }
             const payload = JSON.parse(Buffer.from(jwt.split('.')[1], 'base64url').toString());
             const scope = payload.scp.split(' ').find(s => s.startsWith('Actions.Results:'));
             const [, workflowRunBackendId, workflowJobRunBackendId] = scope.split(':');
@@ -29,11 +29,18 @@ jobs:
 
       - name: Attempt CreateArtifact with job B's IDs, authenticated as job A
         env:
-          ACTIONS_RUNTIME_TOKEN: ${{ env.ACTIONS_RUNTIME_TOKEN }}
-          ACTIONS_RESULTS_URL: ${{ env.ACTIONS_RESULTS_URL }}
           TARGET_RUN_ID: ${{ inputs.target_run_backend_id }}
           TARGET_JOB_ID: ${{ inputs.target_job_backend_id }}
         run: |
+          if [ -z "${ACTIONS_RUNTIME_TOKEN:-}" ]; then
+            echo "ACTIONS_RUNTIME_TOKEN is not set in this job environment" >&2
+            exit 1
+          fi
+          if [ -z "${ACTIONS_RESULTS_URL:-}" ]; then
+            echo "ACTIONS_RESULTS_URL is not set in this job environment" >&2
+            exit 1
+          fi
+
           BODY=$(node -e "
             console.log(JSON.stringify({
               workflowRunBackendId: process.env.TARGET_RUN_ID,
