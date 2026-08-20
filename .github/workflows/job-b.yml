@@ -1,5 +1,5 @@
-name: 'target run (job B)'
-# Run this FIRST, 
+name: 'Artifact isolation test - target run (job B)'
+# Run this FIRST
 on:
   workflow_dispatch: {}
 
@@ -8,18 +8,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Decode this run's Actions.Results scope from its own token
-        run: |
-          node -e "
+        uses: actions/github-script@v7
+        with:
+          script: |
             const jwt = process.env.ACTIONS_RUNTIME_TOKEN;
-            if (!jwt) { throw new Error('ACTIONS_RUNTIME_TOKEN is not set in this job environment'); }
-            const payload = JSON.parse(Buffer.from(jwt.split('.')[1], 'base64url').toString());
-            const scope = payload.scp.split(' ').find(s => s.startsWith('Actions.Results:'));
+            if (!jwt) {
+              throw new Error('ACTIONS_RUNTIME_TOKEN is not present even in the action context');
+            }
+            const payload = JSON.parse(
+              Buffer.from(jwt.split('.')[1], 'base64url').toString()
+            );
+            const scope = payload.scp
+              .split(' ')
+              .find(s => s.startsWith('Actions.Results:'));
             const [, workflowRunBackendId, workflowJobRunBackendId] = scope.split(':');
-            console.log('workflowRunBackendId:    ' + workflowRunBackendId);
-            console.log('workflowJobRunBackendId: ' + workflowJobRunBackendId);
-            console.log('');
-            console.log('Copy these two values into the target_run_backend_id / target_job_backend_id inputs of job-a.yml');
-          "
+            core.info('workflowRunBackendId:    ' + workflowRunBackendId);
+            core.info('workflowJobRunBackendId: ' + workflowJobRunBackendId);
+            core.info('');
+            core.info('Copy these two values into the target_run_backend_id / target_job_backend_id inputs of job-a.yml');
 
       - name: (context) also show the public run_id, for contrast
         run: |
